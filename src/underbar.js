@@ -186,17 +186,26 @@
   //     return total + number * number;
   //   }); // should be 5, regardless of the iterator function passed in
   //          No accumulator is given so the first element is used.
-  _.reduce = function(collection, iterator, accumulator = collection[0]) {
+  _.reduce = function(collection, iterator, accumulator) {
     var i;
-    if(arguments.length === 2){
-      i = 1;
-    } else {
-      i = 0;
+    if(Array.isArray(collection)){
+      if(arguments.length === 2){
+        accumulator = collection[0];
+        i = 1;
+      } else {
+        i = 0;
+      }
+      for(i; i < collection.length; i++){
+        accumulator = iterator(accumulator, collection[i]);
+      }
+      return accumulator;
     }
-    for(i; i < collection.length; i++){
-      accumulator = iterator(accumulator, collection[i]);
+    if(typeof collection === 'object' && !Array.isArray(collection)){
+      for(var prop in collection){
+        accumulator = iterator(accumulator, collection[prop]);
+      }
+      return accumulator;
     }
-    return accumulator;
   };
 
   // Determine if the array or object contains a given value (using `===`).
@@ -215,12 +224,22 @@
   // Determine whether all of the elements match a truth test.
   _.every = function(collection, iterator) {
     // TIP: Try re-using reduce() here.
+    if(arguments.length === 1){
+      return _.filter(collection, function(item){ return item;}).length === collection.length;
+    } else {
+      return _.filter(collection, iterator).length === collection.length;
+    }
   };
 
   // Determine whether any of the elements pass a truth test. If no iterator is
   // provided, provide a default one
   _.some = function(collection, iterator) {
     // TIP: There's a very clever way to re-use every() here.
+    if(arguments.length === 1){
+      return _.filter(collection, function(item){ return item;}).length > 0;
+    } else {
+      return _.filter(collection, iterator).length > 0;
+    }
   };
 
 
@@ -243,11 +262,27 @@
   //     bla: "even more stuff"
   //   }); // obj1 now contains key1, key2, key3 and bla
   _.extend = function(obj) {
+    for(let i = 1; i < arguments.length; i++){
+      for(let prop in arguments[i]){
+        obj[prop] = arguments[i][prop];
+      }
+    }
+
+    return obj;
   };
 
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
   _.defaults = function(obj) {
+    for(let i = 1; i < arguments.length; i++){
+      for(let prop in arguments[i]){
+        if(obj[prop] === undefined){
+          obj[prop] = arguments[i][prop];
+        }
+      }
+    }
+
+    return obj;
   };
 
 
@@ -291,6 +326,18 @@
   // already computed the result for the given argument and return that value
   // instead if possible.
   _.memoize = function(func) {
+    var answers = {};
+  
+    
+    return function(){
+      var args = JSON.stringify(arguments);
+      if(answers.hasOwnProperty(args)){
+        return answers[args];
+      } else {
+        answers[args] = func.apply(this, arguments);
+        return answers[args];
+      }
+    };
   };
 
   // Delays a function for the given number of milliseconds, and then calls
@@ -300,6 +347,17 @@
   // parameter. For example _.delay(someFunction, 500, 'a', 'b') will
   // call someFunction('a', 'b') after 500ms
   _.delay = function(func, wait) {
+    
+   
+    
+   // while(new Date().getTime() < stopTime){}
+    if(arguments.length === 2){
+      return window.setTimeout(func, wait);
+    } else if (arguments.length === 3){
+      return window.setTimeout(func, wait, arguments[2]);
+    } else if (arguments.length === 4){
+      return window.setTimeout(func, wait, arguments[2], arguments[3]);
+    }
   };
 
 
@@ -314,6 +372,15 @@
   // input array. For a tip on how to make a copy of an array, see:
   // http://mdn.io/Array.prototype.slice
   _.shuffle = function(array) {
+    var tempArray = array.slice();
+    var returnArray = [];
+    while(tempArray.length > 0){
+      var rand = Math.round(Math.random(0, tempArray.length) * tempArray.length);
+      if(rand < tempArray.length){
+        returnArray.push(tempArray.splice(rand, 1)[0]);
+      }
+    }
+  return returnArray;
   };
 
 
